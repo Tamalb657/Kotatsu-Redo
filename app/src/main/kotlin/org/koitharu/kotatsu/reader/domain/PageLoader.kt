@@ -51,6 +51,7 @@ import org.koitharu.kotatsu.core.prefs.AppSettings
 import org.koitharu.kotatsu.core.ui.image.TrimTransformation
 import org.koitharu.kotatsu.core.util.FileSize
 import org.koitharu.kotatsu.core.util.MimeTypes
+import org.koitharu.kotatsu.core.util.ext.URI_SCHEME_PDF
 import org.koitharu.kotatsu.core.util.ext.URI_SCHEME_ZIP
 import org.koitharu.kotatsu.core.util.ext.cancelChildrenAndJoin
 import org.koitharu.kotatsu.core.util.ext.compressToPNG
@@ -427,6 +428,7 @@ class PageLoader @Inject constructor(
 				uri.buildUpon().scheme(URI_SCHEME_ZIP).build()
 			}
 
+			uri.scheme == URI_SCHEME_PDF -> uri
 			uri.isFileUri() -> uri
 			else -> {
 				if (isPrefetch) {

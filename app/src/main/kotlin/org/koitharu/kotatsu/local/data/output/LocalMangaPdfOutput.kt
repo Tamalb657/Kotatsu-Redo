@@ -15,8 +15,6 @@ class LocalMangaPdfOutput(
 	manga: Manga,
 ) : LocalMangaArchiveOutput(rootFile, manga) {
 
-	override val isLocalReadable = false
-
 	override fun build(
 		archive: ZipFile,
 		chapters: List<ArchiveChapter>,

@@ -6,6 +6,7 @@ import okio.Path
 import java.io.File
 
 const val URI_SCHEME_ZIP = "file+zip"
+const val URI_SCHEME_PDF = "pdf"
 private const val URI_SCHEME_FILE = "file"
 private const val URI_SCHEME_HTTP = "http"
 private const val URI_SCHEME_HTTPS = "https"

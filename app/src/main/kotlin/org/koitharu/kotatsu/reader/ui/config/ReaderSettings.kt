@@ -8,6 +8,8 @@ import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
 import com.davemorrissey.labs.subscaleview.decoder.SkiaImageDecoder
 import com.davemorrissey.labs.subscaleview.decoder.SkiaImageRegionDecoder
 import com.davemorrissey.labs.subscaleview.decoder.SkiaPooledImageRegionDecoder
+import org.koitharu.kotatsu.core.image.PdfBitmapDecoder
+import org.koitharu.kotatsu.core.image.PdfRegionDecoder
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -75,11 +77,11 @@ data class ReaderSettings(
 		val config = bitmapConfig
 		return if (ssiv.regionDecoderFactory.bitmapConfig != config) {
 			ssiv.regionDecoderFactory = if (ssiv.context.isLowRamDevice()) {
-				SkiaImageRegionDecoder.Factory(config)
+				PdfRegionDecoder.Factory(SkiaImageRegionDecoder.Factory(config))
 			} else {
-				SkiaPooledImageRegionDecoder.Factory(config)
+				PdfRegionDecoder.Factory(SkiaPooledImageRegionDecoder.Factory(config))
 			}
-			ssiv.bitmapDecoderFactory = SkiaImageDecoder.Factory(config)
+			ssiv.bitmapDecoderFactory = PdfBitmapDecoder.Factory(SkiaImageDecoder.Factory(config))
 			true
 		} else {
 			false

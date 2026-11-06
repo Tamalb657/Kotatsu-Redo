@@ -13,3 +13,9 @@ fun hasZipExtension(string: String): Boolean {
 
 val File.isZipArchive: Boolean
 	get() = isFile && isZipExtension(extension)
+
+val File.isEpubArchive: Boolean
+	get() = isFile && extension.equals("epub", ignoreCase = true)
+
+val File.isPdfDocument: Boolean
+	get() = isFile && extension.equals("pdf", ignoreCase = true)

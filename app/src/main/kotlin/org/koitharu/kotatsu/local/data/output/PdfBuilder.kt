@@ -93,6 +93,7 @@ object PdfBuilder {
 					file = extracted,
 					width = size.width,
 					height = size.height,
+					grayscale = size.components == 1,
 				)
 			}
 
@@ -105,6 +106,7 @@ object PdfBuilder {
 					file = jpegFile,
 					width = size.width,
 					height = size.height,
+					grayscale = false,
 				)
 			}
 		}
@@ -138,8 +140,9 @@ object PdfBuilder {
 							input.skipFully(1) // precision
 							val height = input.readInt16()
 							val width = input.readInt16()
-							input.skipFully(length - 7)
-							return ImageSize(width, height)
+							val components = input.read()
+							input.skipFully(length - 8)
+							return ImageSize(width, height, components)
 						}
 					}
 
@@ -217,6 +220,7 @@ object PdfBuilder {
 		val file: File,
 		val width: Int,
 		val height: Int,
+		val grayscale: Boolean,
 	) {
 
 		class Source(
@@ -225,7 +229,7 @@ object PdfBuilder {
 		)
 	}
 
-	private class ImageSize(val width: Int, val height: Int)
+	private class ImageSize(val width: Int, val height: Int, val components: Int = 3)
 
 	private class PdfStreamWriter(private val out: OutputStream) {
 
@@ -264,8 +268,9 @@ object PdfBuilder {
 				// image XObject (JPEG passthrough)
 				writeObjectHeader(imgId)
 				val fileLength = image.file.length()
+				val colorSpace = if (image.grayscale) "/DeviceGray" else "/DeviceRGB"
 				writeRaw("<< /Type /XObject /Subtype /Image /Width ${image.width} /Height ${image.height}")
-				writeRaw(" /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length $fileLength >>")
+				writeRaw(" /ColorSpace $colorSpace /BitsPerComponent 8 /Filter /DCTDecode /Length $fileLength >>")
 				writeRaw("\nstream\n")
 				writeFileBytes(image.file)
 				writeRaw("\nendstream")
@@ -304,14 +309,16 @@ object PdfBuilder {
 		}
 
 		private fun writeXrefAndTrailer(size: Int, infoId: Int) {
+			val xrefOffset = pos
 			writeRaw("xref\n")
 			writeRaw("0 ${size}\n")
-			writeRaw("0000000000 65535 f\n")
+			// each entry must be exactly 20 bytes, including a 2-byte end-of-line marker
+			writeRaw("0000000000 65535 f \n")
 			for (offset in offsets) {
-				writeRaw("%010d 00000 n\n".format(Locale.ROOT, offset))
+				writeRaw("%010d %05d n \n".format(Locale.ROOT, offset, 0))
 			}
 			writeRaw("trailer\n<< /Size ${size} /Root 1 0 R /Info ${infoId} 0 R >>\n")
-			writeRaw("startxref\n${pos}\n%%EOF\n")
+			writeRaw("startxref\n${xrefOffset}\n%%EOF\n")
 		}
 
 		private fun writeObject(id: Int, dict: String) {

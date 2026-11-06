@@ -29,6 +29,8 @@ import org.koitharu.kotatsu.core.util.ext.toFileNameSafe
 import org.koitharu.kotatsu.core.util.ext.toListSorted
 import org.koitharu.kotatsu.local.data.MangaIndex
 import org.koitharu.kotatsu.local.data.hasZipExtension
+import org.koitharu.kotatsu.local.data.isEpubArchive
+import org.koitharu.kotatsu.local.data.isPdfDocument
 import org.koitharu.kotatsu.local.data.isZipArchive
 import org.koitharu.kotatsu.local.data.output.LocalMangaOutput.Companion.ENTRY_NAME_INDEX
 import org.koitharu.kotatsu.local.domain.model.LocalManga
@@ -56,8 +58,11 @@ class LocalMangaParser(private val uri: Uri) {
 
 	private val rootFile: File = File(uri.schemeSpecificPart)
 
-	suspend fun getManga(withDetails: Boolean): LocalManga = runInterruptible(Dispatchers.IO) {
-		(uri.resolveFsAndPath()).use { (fileSystem, rootPath) ->
+	suspend fun getManga(withDetails: Boolean): LocalManga = when {
+		rootFile.isPdfDocument -> PdfMangaParser(rootFile).getManga(withDetails)
+		rootFile.isEpubArchive -> EpubMangaParser(rootFile).getManga(withDetails)
+		else -> runInterruptible(Dispatchers.IO) {
+			(uri.resolveFsAndPath()).use { (fileSystem, rootPath) ->
 			val index = MangaIndex.read(fileSystem, rootPath / ENTRY_NAME_INDEX)
 			val mangaInfo = index?.getMangaInfo()
 			if (mangaInfo != null) {
@@ -140,17 +145,25 @@ class LocalMangaParser(private val uri: Uri) {
 				)
 			}.let { LocalManga(it, rootFile) }
 		}
-	}
-
-	suspend fun getMangaInfo(): Manga? = runInterruptible(Dispatchers.IO) {
-		uri.resolveFsAndPath().use { (fileSystem, rootPath) ->
-			val index = MangaIndex.read(fileSystem, rootPath / ENTRY_NAME_INDEX)
-			index?.getMangaInfo()
 		}
 	}
 
-	suspend fun getPages(chapter: MangaChapter): List<MangaPage> = runInterruptible(Dispatchers.IO) {
-		val chapterUri = chapter.url.toUri().resolve()
+	suspend fun getMangaInfo(): Manga? = when {
+		rootFile.isPdfDocument -> PdfMangaParser(rootFile).getMangaInfo()
+		rootFile.isEpubArchive -> EpubMangaParser(rootFile).getMangaInfo()
+		else -> runInterruptible(Dispatchers.IO) {
+			uri.resolveFsAndPath().use { (fileSystem, rootPath) ->
+				val index = MangaIndex.read(fileSystem, rootPath / ENTRY_NAME_INDEX)
+				index?.getMangaInfo()
+			}
+		}
+	}
+
+	suspend fun getPages(chapter: MangaChapter): List<MangaPage> = when {
+		rootFile.isPdfDocument -> PdfMangaParser(rootFile).getPages(chapter)
+		rootFile.isEpubArchive -> EpubMangaParser(rootFile).getPages(chapter)
+		else -> runInterruptible(Dispatchers.IO) {
+			val chapterUri = chapter.url.toUri().resolve()
 		chapterUri.resolveFsAndPath().use { (fileSystem, rootPath) ->
 			val index = MangaIndex.read(fileSystem, rootPath / ENTRY_NAME_INDEX)
 			val entries = fileSystem.listRecursively(rootPath)
@@ -161,15 +174,16 @@ class LocalMangaParser(private val uri: Uri) {
 			} else {
 				entries.filter { x -> x.isImage() && x.parent == rootPath }
 			}.toListSorted(compareBy(AlphanumComparator()) { x -> x.toString() })
-				.map { x ->
-					val entryUri = chapterUri.child(x, resolve = true).toString()
-					MangaPage(
-						id = entryUri.longHashCode(),
-						url = entryUri,
-						preview = null,
-						source = LocalMangaSource,
-					)
-				}
+					.map { x ->
+						val entryUri = chapterUri.child(x, resolve = true).toString()
+						MangaPage(
+							id = entryUri.longHashCode(),
+							url = entryUri,
+							preview = null,
+							source = LocalMangaSource,
+						)
+					}
+			}
 		}
 	}
 
@@ -249,7 +263,9 @@ class LocalMangaParser(private val uri: Uri) {
 		private val REGEX_PARENT_PATH_PREFIX = Regex("^(/\\.\\.)+")
 
 		@Blocking
-		fun getOrNull(file: File): LocalMangaParser? = if ((file.isDirectory || file.isZipArchive) && file.canRead()) {
+		fun getOrNull(file: File): LocalMangaParser? = if (
+			(file.isDirectory || file.isZipArchive || file.isPdfDocument || file.isEpubArchive) && file.canRead()
+		) {
 			LocalMangaParser(file)
 		} else {
 			null

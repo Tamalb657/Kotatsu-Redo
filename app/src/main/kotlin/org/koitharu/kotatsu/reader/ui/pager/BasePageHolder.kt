@@ -21,6 +21,8 @@ import org.koitharu.kotatsu.BuildConfig
 import org.koitharu.kotatsu.R
 import org.koitharu.kotatsu.core.exceptions.resolve.ExceptionResolver
 import org.koitharu.kotatsu.core.image.CoilImageView
+import org.koitharu.kotatsu.core.image.PdfBitmapDecoder
+import org.koitharu.kotatsu.core.image.PdfRegionDecoder
 import org.koitharu.kotatsu.core.os.NetworkState
 import org.koitharu.kotatsu.core.ui.list.lifecycle.LifecycleAwareViewHolder
 import org.koitharu.kotatsu.core.util.ext.getDisplayMessage
@@ -77,6 +79,8 @@ abstract class BasePageHolder<B : ViewBinding>(
 		private set
 
 	init {
+		ssiv.bitmapDecoderFactory = PdfBitmapDecoder.Factory(ssiv.bitmapDecoderFactory)
+		ssiv.regionDecoderFactory = PdfRegionDecoder.Factory(ssiv.regionDecoderFactory)
 		lifecycleScope.launch(Dispatchers.Main) {
 			ssiv.bindToLifecycle(this@BasePageHolder)
 			ssiv.isEagerLoadingEnabled = !context.isLowRamDevice()
