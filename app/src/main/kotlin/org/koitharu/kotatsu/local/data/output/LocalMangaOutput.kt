@@ -19,6 +19,13 @@ sealed class LocalMangaOutput(
 	val rootFile: File,
 ) : Closeable {
 
+	/**
+	 * Whether the resulting file can be read back by [org.koitharu.kotatsu.local.data.input.LocalMangaParser],
+	 * i.e. be registered in the local library and reopened inside the app.
+	 * Export-only formats (PDF, EPUB) produce files for external readers and cannot be read back.
+	 */
+	open val isLocalReadable: Boolean = true
+
 	abstract suspend fun mergeWithExisting()
 
 	abstract suspend fun addCover(file: File, type: MimeType?)
@@ -71,8 +78,15 @@ sealed class LocalMangaOutput(
 					val fileName = if (i == 0) baseName else baseName + "_$i"
 					val dir = File(root, fileName)
 					val zip = File(root, "$fileName.cbz")
+					val pdf = File(root, "$fileName.pdf")
+					val epub = File(root, "$fileName.epub")
 					i++
 					return when {
+						// PDF and EPUB are export-only formats: they cannot be resumed or merged,
+						// so each download with these formats starts from scratch and replaces the previous file.
+						!onlyIfExists && format == DownloadFormat.SINGLE_PDF -> LocalMangaPdfOutput(pdf, manga)
+						!onlyIfExists && format == DownloadFormat.SINGLE_EPUB -> LocalMangaEpubOutput(epub, manga)
+
 						dir.isDirectory -> {
 							if (canWriteTo(dir, manga)) {
 								LocalMangaDirOutput(dir, manga)
@@ -91,6 +105,11 @@ sealed class LocalMangaOutput(
 							DownloadFormat.AUTOMATIC -> null
 							DownloadFormat.SINGLE_CBZ -> LocalMangaZipOutput(zip, manga)
 							DownloadFormat.MULTIPLE_CBZ -> LocalMangaDirOutput(dir, manga)
+							DownloadFormat.SINGLE_PDF,
+							DownloadFormat.SINGLE_EPUB,
+							-> null
+
+							else -> null
 						}
 
 						else -> null

@@ -52,6 +52,7 @@ import org.koitharu.kotatsu.core.network.imageproxy.ImageProxyInterceptor
 import org.koitharu.kotatsu.core.parser.MangaDataRepository
 import org.koitharu.kotatsu.core.parser.MangaRepository
 import org.koitharu.kotatsu.core.prefs.AppSettings
+import org.koitharu.kotatsu.core.prefs.DownloadFormat
 import org.koitharu.kotatsu.core.util.MimeTypes
 import org.koitharu.kotatsu.core.util.Throttler
 import org.koitharu.kotatsu.core.util.ext.MimeType
@@ -133,7 +134,13 @@ class DownloadWorker @AssistedInject constructor(
 		setForeground(getForegroundInfo())
 		val manga = mangaDataRepository.findMangaById(task.mangaId, withChapters = true) ?: return Result.failure()
 		publishState(DownloadState(manga = manga, isIndeterminate = true).also { lastPublishedState = it })
-		val downloadedIds = getDoneChapters(manga)
+		val requestedFormat = task.format ?: settings.preferredDownloadFormat
+		val downloadedIds = if (requestedFormat == DownloadFormat.SINGLE_PDF || requestedFormat == DownloadFormat.SINGLE_EPUB) {
+			// export-only formats cannot be merged with an existing download: every chapter is fetched
+			emptySet()
+		} else {
+			getDoneChapters(manga)
+		}
 		return try {
 			val pausingHandle = PausingHandle()
 			if (task.isPaused) {
@@ -282,8 +289,15 @@ class DownloadWorker @AssistedInject constructor(
 				publishState(currentState.copy(isIndeterminate = true, eta = -1L, isStuck = false))
 				output.mergeWithExisting()
 				output.finish()
-				val localManga = LocalMangaParser(output.rootFile).getManga(withDetails = false)
-				localStorageChanges.emit(localManga)
+				val localManga = if (output.isLocalReadable) {
+					runCatchingCancellable {
+						LocalMangaParser(output.rootFile).getManga(withDetails = false)
+					}.onFailure(Throwable::printStackTraceDebug).getOrNull()
+				} else {
+					// export-only formats (PDF, EPUB) are not readable by the app's local library
+					null
+				}
+				localManga?.let { localStorageChanges.emit(it) }
 				publishState(currentState.copy(localManga = localManga, eta = -1L, isStuck = false))
 			} catch (e: Exception) {
 				if (e !is CancellationException) {

@@ -8,4 +8,6 @@ enum class DownloadFormat {
 	AUTOMATIC,
 	SINGLE_CBZ,
 	MULTIPLE_CBZ,
+	SINGLE_PDF,
+	SINGLE_EPUB,
 }
