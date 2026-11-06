@@ -164,17 +164,13 @@ abstract class HiddenImagesDao {
  * Unlike that one this holds what the reader decided rather than something that rebuilds itself, so it has
  * no destructive fallback. A schema change here has to ship a migration.
  */
+// NOTE: the auto migrations above (1..6 -> 7) are disabled because the exported Room schema
+// JSON files for those versions are not in the repository (app/schemas/ is gitignored), so a
+// fresh checkout cannot build them. Builds from this source instead fall back destructively
+// for databases at those old versions - see the database builder below.
 @Database(
 	entities = [HiddenImageEntity::class, HiddenPageEntity::class, PageScanEntity::class],
 	version = 7,
-	autoMigrations = [
-		AutoMigration(from = 1, to = 2),
-		AutoMigration(from = 2, to = 3),
-		AutoMigration(from = 3, to = 4),
-		AutoMigration(from = 4, to = 5, spec = ForgetUnreliableMatches::class),
-		AutoMigration(from = 5, to = 6),
-		AutoMigration(from = 6, to = 7),
-	],
 )
 abstract class HiddenImagesDatabase : RoomDatabase() {
 	abstract fun getDao(): HiddenImagesDao
@@ -202,5 +198,10 @@ object HiddenImagesModule {
 	@Singleton
 	fun provideHiddenImagesDatabase(@ApplicationContext context: Context): HiddenImagesDatabase = Room
 		.databaseBuilder(context, HiddenImagesDatabase::class.java, "kotatsu-hidden-images-db")
+		// The auto migrations from versions 1..6 cannot be built without the exported schema
+		// files, which are not committed to the repository. Rather than crash on such an
+		// upgrade, reset this small database: it only holds hidden-image marks and the
+		// derived page scan cache, never essential user data.
+		.fallbackToDestructiveMigrationFrom(1, 2, 3, 4, 5, 6)
 		.build()
 }
