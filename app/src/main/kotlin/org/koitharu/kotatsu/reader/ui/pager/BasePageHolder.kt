@@ -78,9 +78,9 @@ abstract class BasePageHolder<B : ViewBinding>(
 	var boundData: ReaderPage? = null
 		private set
 
+	private var decodersAreWrapped = false
+
 	init {
-		ssiv.bitmapDecoderFactory = PdfBitmapDecoder.Factory(ssiv.bitmapDecoderFactory)
-		ssiv.regionDecoderFactory = PdfRegionDecoder.Factory(ssiv.regionDecoderFactory)
 		lifecycleScope.launch(Dispatchers.Main) {
 			ssiv.bindToLifecycle(this@BasePageHolder)
 			ssiv.isEagerLoadingEnabled = !context.isLowRamDevice()
@@ -119,6 +119,7 @@ abstract class BasePageHolder<B : ViewBinding>(
 	}
 
 	fun bind(data: ReaderPage) {
+		ensurePdfDecoders()
 		boundData?.let { pageLoader.onPageUnbound(it.id) }
 		pageLoader.onPageBound(data.id)
 		boundData = data
@@ -127,6 +128,19 @@ abstract class BasePageHolder<B : ViewBinding>(
 		animatedView?.disposeImage()
 		viewModel.onBind(data.toMangaPage())
 		onBind(data)
+	}
+
+	/**
+	 * Wraps the image view's decoder factories once so that pdf:// pages can be decoded.
+	 * Runs on first bind: the underlying view is not available in the constructor.
+	 */
+	private fun ensurePdfDecoders() {
+		if (decodersAreWrapped) {
+			return
+		}
+		decodersAreWrapped = true
+		ssiv.bitmapDecoderFactory = PdfBitmapDecoder.Factory(ssiv.bitmapDecoderFactory)
+		ssiv.regionDecoderFactory = PdfRegionDecoder.Factory(ssiv.regionDecoderFactory)
 	}
 
 	@CallSuper
