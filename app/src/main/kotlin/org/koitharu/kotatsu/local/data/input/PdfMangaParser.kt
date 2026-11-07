@@ -1,6 +1,5 @@
 package org.koitharu.kotatsu.local.data.input
 
-import android.graphics.Color
 import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.os.ParcelFileDescriptor
@@ -9,6 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runInterruptible
 import org.koitharu.kotatsu.core.model.LocalMangaSource
 import org.koitharu.kotatsu.core.util.ext.URI_SCHEME_PDF
+import org.koitharu.kotatsu.core.util.ext.printStackTraceDebug
 import org.koitharu.kotatsu.local.domain.model.LocalManga
 import org.koitharu.kotatsu.parsers.model.Manga
 import org.koitharu.kotatsu.parsers.model.MangaChapter
@@ -16,10 +16,14 @@ import org.koitharu.kotatsu.parsers.model.MangaPage
 import org.koitharu.kotatsu.parsers.util.longHashCode
 import org.koitharu.kotatsu.parsers.util.toTitleCase
 import java.io.File
+import java.io.IOException
 
 /**
  * Reads manga from a PDF file via [PdfRenderer]. The whole document is a single chapter;
  * pages are rendered on demand by [org.koitharu.kotatsu.core.image.PdfPageFetcher].
+ *
+ * A file the PDF engine cannot open (e.g. written by a bugged older build, or damaged)
+ * must never crash the caller: it degrades to a manga without chapters and empty pages.
  */
 class PdfMangaParser(private val file: File) {
 
@@ -31,18 +35,23 @@ class PdfMangaParser(private val file: File) {
 		}
 	}
 
-	private fun pageCount(): Int = withRenderer { it.pageCount }
+	private fun pageCountOrNull(): Int? = try {
+		withRenderer { it.pageCount }
+	} catch (e: Exception) {
+		e.printStackTraceDebug()
+		null
+	}
 
 	suspend fun getManga(withDetails: Boolean): LocalManga = runInterruptible(Dispatchers.IO) {
-		val count = pageCount()
+		val count = pageCountOrNull()
 		val manga = Manga(
 			id = file.absolutePath.longHashCode(),
 			title = file.name.removeSuffix(".pdf").replace('_', ' ').toTitleCase(),
 			url = file.toUri().toString(),
 			publicUrl = file.toUri().toString(),
 			source = LocalMangaSource,
-			coverUrl = buildPageUri(0).toString(),
-			chapters = if (withDetails) {
+			coverUrl = if (count != null && count > 0) buildPageUri(0).toString() else null,
+			chapters = if (withDetails && count != null && count > 0) {
 				listOf(
 					MangaChapter(
 						id = file.absolutePath.longHashCode(),
@@ -72,14 +81,14 @@ class PdfMangaParser(private val file: File) {
 	}
 
 	suspend fun getMangaInfo(): Manga? = runInterruptible(Dispatchers.IO) {
-		pageCount()
+		val count = pageCountOrNull()
 		Manga(
 			id = file.absolutePath.longHashCode(),
 			title = file.name.removeSuffix(".pdf").replace('_', ' ').toTitleCase(),
 			url = file.toUri().toString(),
 			publicUrl = file.toUri().toString(),
 			source = LocalMangaSource,
-			coverUrl = buildPageUri(0).toString(),
+			coverUrl = if (count != null && count > 0) buildPageUri(0).toString() else null,
 			chapters = null,
 			altTitles = emptySet(),
 			rating = -1f,
@@ -93,7 +102,7 @@ class PdfMangaParser(private val file: File) {
 	}
 
 	suspend fun getPages(chapter: MangaChapter): List<MangaPage> = runInterruptible(Dispatchers.IO) {
-		val count = pageCount()
+		val count = pageCountOrNull() ?: return@runInterruptible emptyList()
 		(0 until count).map { index ->
 			val url = buildPageUri(index).toString()
 			MangaPage(
