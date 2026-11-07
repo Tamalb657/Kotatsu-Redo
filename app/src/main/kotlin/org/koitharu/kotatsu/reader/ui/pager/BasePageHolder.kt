@@ -25,6 +25,8 @@ import org.koitharu.kotatsu.core.image.PdfBitmapDecoder
 import org.koitharu.kotatsu.core.image.PdfRegionDecoder
 import org.koitharu.kotatsu.core.os.NetworkState
 import org.koitharu.kotatsu.core.ui.list.lifecycle.LifecycleAwareViewHolder
+import androidx.core.net.toUri
+import org.koitharu.kotatsu.core.util.ext.URI_SCHEME_PDF
 import org.koitharu.kotatsu.core.util.ext.getDisplayMessage
 import org.koitharu.kotatsu.core.util.ext.isAnimatedImage
 import org.koitharu.kotatsu.core.util.ext.isLowRamDevice
@@ -221,6 +223,9 @@ abstract class BasePageHolder<B : ViewBinding>(
 			bindingInfo.textViewStatus.setText(R.string.loading_)
 		}
 		val isAnimated = boundData?.url?.isAnimatedImage() == true
+		// PDF pages render through the plain image view: the zoomable view cannot tile them,
+		// and the image loader already knows how to rasterize a pdf:// page.
+		val isPdf = boundData?.url?.toUri()?.scheme == URI_SCHEME_PDF
 		when (state) {
 			is PageState.Converting -> {
 				bindingInfo.textViewStatus.setText(R.string.processing_)
@@ -240,7 +245,7 @@ abstract class BasePageHolder<B : ViewBinding>(
 			}
 
 			is PageState.Loaded -> {
-				if (isAnimated) {
+				if (isAnimated || isPdf) {
 					showAnimated(boundData!!, state)
 					bindingInfo.layoutProgress.isGone = true
 				} else {
@@ -251,7 +256,7 @@ abstract class BasePageHolder<B : ViewBinding>(
 			}
 
 			is PageState.Loading -> {
-				if (state.preview != null && ssiv.getState() == null) {
+				if (!isPdf && state.preview != null && ssiv.getState() == null) {
 					ssiv.setImage(state.preview)
 				}
 			}
