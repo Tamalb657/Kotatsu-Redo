@@ -78,7 +78,9 @@ class EpubMangaParser(private val file: File) {
 			chapters = if (withDetails) {
 				info.chapters.mapIndexed { i, doc ->
 					MangaChapter(
-						id = "${i}$doc".longHashCode(),
+						// stable across launches: derived from the position and path of the spine
+						// document, not from the object identity
+						id = "$i:${doc.path}".longHashCode(),
 						title = doc.title ?: "Chapter ${i + 1}",
 						number = (i + 1).toFloat(),
 						volume = 0,

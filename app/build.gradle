@@ -39,6 +39,18 @@ android {
 	buildToolsVersion = '35.0.0'
 	namespace = 'org.koitharu.kotatsu'
 
+	signingConfigs {
+		release {
+			def ksPath = readSecret('KOTATSUX_KEYSTORE_PATH', 'KOTATSUX_KEYSTORE_PATH')
+			if (ksPath) {
+				storeFile file(ksPath)
+				storePassword readSecret('KOTATSUX_KEYSTORE_PASSWORD', 'KOTATSUX_KEYSTORE_PASSWORD')
+				keyAlias readSecret('KOTATSUX_KEY_ALIAS', 'KOTATSUX_KEY_ALIAS')
+				keyPassword readSecret('KOTATSUX_KEY_PASSWORD', 'KOTATSUX_KEY_PASSWORD')
+			}
+		}
+	}
+
     dependenciesInfo {
         // Disables dependency metadata when building APKs.
         includeInApk = false
@@ -50,8 +62,8 @@ android {
 		applicationId 'io.github.kotatsuredo.kotatsu'
 		minSdk = 23
 		targetSdk = 37
-		versionCode = 2050
-        versionName = '9.8.7.1'
+		versionCode = 2051
+        versionName = '9.8.7.2'
 		generatedDensities = []
 		ndk {
 			// ARM only. x86 and x86_64 devices - Intel Chromebooks, emulators, BlueStacks - run these
@@ -94,10 +106,22 @@ android {
 			minifyEnabled true
 			shrinkResources true
 			proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+			if (readSecret('KOTATSUX_KEYSTORE_PATH', 'KOTATSUX_KEYSTORE_PATH')) {
+				signingConfig signingConfigs.release
+			}
 		}
 		nightly {
 			initWith release
 			applicationIdSuffix = '.nightly'
+		}
+	}
+
+	splits {
+		abi {
+			enable true
+			reset()
+			include 'armeabi-v7a', 'arm64-v8a', 'x86_64'
+			universalApk true
 		}
 	}
 	buildFeatures {
