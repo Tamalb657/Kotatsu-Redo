@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:background="#FF14161B"
+	android:orientation="vertical">
+
+	<com.google.android.material.appbar.AppBarLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:fitsSystemWindows="true">
+
+		<com.google.android.material.appbar.MaterialToolbar
+			android:id="@+id/toolbar"
+			android:layout_width="match_parent"
+			android:layout_height="?actionBarSize"
+			app:title="@string/crop_and_save"
+			app:titleTextAppearance="?textAppearanceTitleMedium" />
+	</com.google.android.material.appbar.AppBarLayout>
+
+	<org.koitharu.kotatsu.reader.ui.crop.CropDrawView
+		android:id="@+id/cropView"
+		android:layout_width="match_parent"
+		android:layout_height="0dp"
+		android:layout_weight="1" />
+
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:background="?android:colorBackground"
+		android:orientation="vertical"
+		android:paddingHorizontal="12dp"
+		android:paddingTop="8dp">
+
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:gravity="center_vertical"
+			android:orientation="horizontal">
+
+			<com.google.android.material.button.MaterialButton
+				android:id="@+id/button_mode_crop"
+				style="@style/Widget.Material3.Button.TonalButton"
+				android:layout_width="0dp"
+				android:layout_height="wrap_content"
+				android:layout_marginEnd="6dp"
+				android:layout_weight="1"
+				android:text="@string/crop"
+				/>
+
+			<com.google.android.material.button.MaterialButton
+				android:id="@+id/button_mode_draw"
+				style="@style/Widget.Material3.Button.TonalButton"
+				android:layout_width="0dp"
+				android:layout_height="wrap_content"
+				android:layout_marginEnd="6dp"
+				android:layout_weight="1"
+				android:text="@string/draw"
+				/>
+
+			<com.google.android.material.button.MaterialButton
+				android:id="@+id/button_eyedropper"
+				style="@style/Widget.Material3.Button.TonalButton"
+				android:layout_width="0dp"
+				android:layout_height="wrap_content"
+				android:layout_weight="1"
+				android:text="@string/pick_color"
+				/>
+		</LinearLayout>
+
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="8dp"
+			android:gravity="center_vertical"
+			android:orientation="horizontal">
+
+			<View
+				android:id="@+id/swatch_0"
+				android:layout_width="34dp"
+				android:layout_height="34dp"
+				android:layout_marginEnd="10dp"
+				android:background="@drawable/bg_color_swatch"
+				tools:backgroundTint="@android:color/black" />
+
+			<View
+				android:id="@+id/swatch_1"
+				android:layout_width="34dp"
+				android:layout_height="34dp"
+				android:layout_marginEnd="10dp"
+				android:background="@drawable/bg_color_swatch" />
+
+			<View
+				android:id="@+id/swatch_2"
+				android:layout_width="34dp"
+				android:layout_height="34dp"
+				android:layout_marginEnd="10dp"
+				android:background="@drawable/bg_color_swatch" />
+
+			<View
+				android:id="@+id/swatch_3"
+				android:layout_width="34dp"
+				android:layout_height="34dp"
+				android:layout_marginEnd="10dp"
+				android:background="@drawable/bg_color_swatch" />
+
+			<View
+				android:id="@+id/swatch_4"
+				android:layout_width="34dp"
+				android:layout_height="34dp"
+				android:layout_marginEnd="10dp"
+				android:background="@drawable/bg_color_swatch" />
+
+			<View
+				android:id="@+id/swatch_5"
+				android:layout_width="34dp"
+				android:layout_height="34dp"
+				android:background="@drawable/bg_color_swatch" />
+
+			<View
+				android:layout_width="0dp"
+				android:layout_height="1dp"
+				android:layout_weight="1" />
+
+			<com.google.android.material.button.MaterialButton
+				android:id="@+id/button_save"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="@string/save" />
+		</LinearLayout>
+
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="8dp"
+			android:layout_marginBottom="8dp"
+			android:gravity="center_vertical"
+			android:orientation="horizontal">
+
+			<com.google.android.material.button.MaterialButton
+				android:id="@+id/button_stroke_small"
+				style="@style/Widget.Material3.Button.OutlinedButton"
+				android:layout_width="wrap_content"
+				android:minWidth="52dp"
+				android:layout_height="wrap_content"
+				android:text="@string/stroke_thin" />
+
+			<com.google.android.material.button.MaterialButton
+				android:id="@+id/button_stroke_medium"
+				style="@style/Widget.Material3.Button.OutlinedButton"
+				android:layout_width="wrap_content"
+				android:minWidth="52dp"
+				android:layout_height="wrap_content"
+				android:layout_marginStart="6dp"
+				android:text="@string/stroke_medium" />
+
+			<com.google.android.material.button.MaterialButton
+				android:id="@+id/button_stroke_large"
+				style="@style/Widget.Material3.Button.OutlinedButton"
+				android:layout_width="wrap_content"
+				android:minWidth="52dp"
+				android:layout_height="wrap_content"
+				android:layout_marginStart="6dp"
+				android:text="@string/stroke_thick" />
+
+			<View
+				android:layout_width="0dp"
+				android:layout_height="1dp"
+				android:layout_weight="1" />
+
+			<com.google.android.material.button.MaterialButton
+				android:id="@+id/button_undo"
+				style="@style/Widget.Material3.Button.TextButton"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="@string/undo" />
+
+			<com.google.android.material.button.MaterialButton
+				android:id="@+id/button_reset"
+				style="@style/Widget.Material3.Button.TextButton"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="@string/reset_crop" />
+		</LinearLayout>
+	</LinearLayout>
+</LinearLayout>

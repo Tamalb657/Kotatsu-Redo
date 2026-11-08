@@ -24,8 +24,11 @@ import okio.buffer
 import okio.openZip
 import okio.sink
 import okio.source
+import android.graphics.Bitmap
 import org.koitharu.kotatsu.core.LocalizedAppContext
 import org.koitharu.kotatsu.core.image.BitmapDecoderCompat
+import org.koitharu.kotatsu.core.image.PdfPageRenderer
+import org.koitharu.kotatsu.core.util.ext.URI_SCHEME_PDF
 import org.koitharu.kotatsu.core.os.OpenDocumentTreeHelper
 import org.koitharu.kotatsu.core.prefs.AppSettings
 import org.koitharu.kotatsu.core.util.MimeTypes
@@ -37,6 +40,8 @@ import org.koitharu.kotatsu.core.util.ext.writeAllCancellable
 import org.koitharu.kotatsu.parsers.model.Manga
 import org.koitharu.kotatsu.parsers.model.MangaPage
 import org.koitharu.kotatsu.reader.domain.PageLoader
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -168,6 +173,15 @@ class PageSaveHelper @AssistedInject constructor(
 		uri.isZipUri() -> FileSystem.SYSTEM.openZip(uri.schemeSpecificPart.toPath())
 			.source(requireNotNull(uri.fragment).toPath())
 
+		uri.scheme == URI_SCHEME_PDF -> {
+			// PDF pages are rendered rather than copied: there is no image file to stream
+			val bitmap = PdfPageRenderer.renderToBitmap(uri)
+			val output = ByteArrayOutputStream()
+			bitmap.compress(Bitmap.CompressFormat.JPEG, PDF_RENDER_QUALITY, output)
+			bitmap.recycle()
+			ByteArrayInputStream(output.toByteArray()).source()
+		}
+
 		else -> throw IllegalArgumentException("Bad uri $uri: unsupported scheme")
 	}
 
@@ -216,5 +230,6 @@ class PageSaveHelper @AssistedInject constructor(
 		private const val MAX_BASENAME_LENGTH = 12
 		private const val EXTENSION_FALLBACK = "png"
 		private const val TEMP_DIR = "pages"
+		private const val PDF_RENDER_QUALITY = 95
 	}
 }

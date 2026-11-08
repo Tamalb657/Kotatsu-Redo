@@ -57,6 +57,15 @@
     <string name="remove">Remove</string>
     <string name="_s_deleted_from_local_storage">\"%s\" deleted from local storage</string>
     <string name="save_page">Save page</string>
+    <string name="crop_and_save">Crop &amp; save</string>
+    <string name="crop">Crop</string>
+    <string name="draw">Draw</string>
+    <string name="pick_color">Pick colour</string>
+    <string name="reset_crop">Reset crop</string>
+    <string name="stroke_thin">S</string>
+    <string name="stroke_medium">M</string>
+    <string name="stroke_thick">L</string>
+    <string name="cropped_image_saved">Saved to %s</string>
     <string name="page_saved">Page saved</string>
     <string name="pages_saved">Pages saved</string>
     <string name="share_image">Share image</string>

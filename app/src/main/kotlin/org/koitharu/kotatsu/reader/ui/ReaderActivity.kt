@@ -77,6 +77,7 @@ import org.koitharu.kotatsu.reader.domain.TapGridArea
 import org.koitharu.kotatsu.reader.domain.erase.ImageHider
 import org.koitharu.kotatsu.reader.domain.indexOfPosition
 import org.koitharu.kotatsu.reader.ui.config.ReaderConfigSheet
+import org.koitharu.kotatsu.reader.ui.crop.PageCropActivity
 import org.koitharu.kotatsu.reader.ui.erase.EraseController
 import org.koitharu.kotatsu.reader.ui.erase.ErasePageTarget
 import org.koitharu.kotatsu.reader.ui.pager.ReaderPage
@@ -560,6 +561,30 @@ class ReaderActivity :
 
     override fun onSavePageClick() {
         viewModel.saveCurrentPage(pageSaveHelper)
+    }
+
+    override fun onCropSaveClick() {
+        lifecycleScope.launch {
+            val state = viewModel.getCurrentState() ?: return@launch
+            val page = viewModel.getCurrentPage() ?: return@launch
+            val currentManga = viewModel.manga.value ?: return@launch
+            val task = PageSaveHelper.Task(
+                manga = currentManga,
+                chapterId = state.chapterId,
+                pageNumber = state.page + 1,
+                page = page,
+            )
+            val file = runCatching {
+                pageSaveHelper.saveToTempFile(task)
+            }.onFailure { e ->
+                e.printStackTrace()
+            }.getOrNull()
+            if (file == null) {
+                Snackbar.make(viewBinding.root, R.string.error, Snackbar.LENGTH_SHORT).show()
+                return@launch
+            }
+            startActivity(PageCropActivity.newIntent(this@ReaderActivity, file))
+        }
     }
 
     override fun onScrollTimerClick(isLongClick: Boolean) {

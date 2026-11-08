@@ -153,11 +153,15 @@
 			<intent-filter>
 				<action android:name="com.samsung.android.support.REMOTE_ACTION" />
 			</intent-filter>
-
 			<meta-data
 				android:name="com.samsung.android.support.REMOTE_ACTION"
 				android:resource="@xml/remote_action" />
 		</activity>
+		<activity
+			android:name="org.koitharu.kotatsu.reader.ui.crop.PageCropActivity"
+			android:exported="false"
+			android:largeHeap="true"
+			android:label="@string/crop_and_save" />
 		<activity
 			android:name="org.koitharu.kotatsu.search.ui.MangaListActivity"
 			android:exported="true"

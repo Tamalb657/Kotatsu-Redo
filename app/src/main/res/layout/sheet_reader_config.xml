@@ -35,6 +35,13 @@
                 app:drawableStartCompat="@drawable/ic_save" />
 
             <org.koitharu.kotatsu.core.ui.widgets.ListItemTextView
+                android:id="@+id/button_crop_save"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/crop_and_save"
+                app:drawableStartCompat="@drawable/ic_crop" />
+
+            <org.koitharu.kotatsu.core.ui.widgets.ListItemTextView
                 android:id="@+id/button_bookmark"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
